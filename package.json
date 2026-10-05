@@ -1,0 +1,127 @@
+{
+  "name": "med-lit-tool",
+  "version": "1.0.0",
+  "description": "一站式科研终端（医学版） —— PubMed 检索、文献 AI 解析、PDF 图片阅读、论文进度、AI 助手",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node --test",
+    "test:files": "node --test \"test/*.test.mjs\"",
+    "electron": "electron .",
+    "dist": "electron-builder --win",
+    "dist:dir": "electron-builder --win dir",
+    "dist:mac": "electron-builder --mac",
+    "dist:mac:arm64": "electron-builder --mac dmg --arm64",
+    "dist:mac:x64": "electron-builder --mac dmg --x64"
+  },
+  "keywords": [
+    "zotero",
+    "literature",
+    "pdf",
+    "ai",
+    "research"
+  ],
+  "author": "SciTerminal",
+  "license": "MIT",
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "dompurify": "^3.2.6",
+    "electron-updater": "^6.6.2",
+    "express": "^4.19.2",
+    "imapflow": "^2.0.5",
+    "katex": "^0.16.22",
+    "lunar-javascript": "^1.6.13",
+    "mailparser": "^3.9.28",
+    "mammoth": "^1.8.0",
+    "marked": "^15.0.12",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^10.0.10",
+    "pdf-lib": "^1.17.1",
+    "sanitize-html": "^2.17.0",
+    "unpdf": "^0.12.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.research.medlit",
+    "productName": "一站式科研终端（医学版）",
+    "asar": false,
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "zhaojiayuan19981123",
+        "repo": "med-lit-tool",
+        "releaseType": "release"
+      }
+    ],
+    "files": [
+      "server.js",
+      "src/**/*",
+      "public/**/*",
+      "electron/**/*",
+      "package.json",
+      "node_modules/**/*",
+      "!node_modules/canvas/**",
+      "!node_modules/**/canvas/**"
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg"
+      ],
+      "artifactName": "med-lit-tool-${version}-macos-${arch}.dmg"
+    },
+    "dmg": {
+      "title": "一站式科研终端（医学版）",
+      "icon": "build/icon.icns",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "med-lit-tool-setup-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "include": "build/installer.nsh",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "一站式科研终端（医学版）",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "artifactName": "med-lit-tool-setup-${version}.exe"
+    }
+  }
+}
