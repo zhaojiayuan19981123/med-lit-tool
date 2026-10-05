@@ -64,6 +64,7 @@
         <div class="nav-section-label">研究工作</div>
         <div class="nav-item active" data-view="home"><span class="nav-ico">🏠</span>首页</div>
         <div class="nav-item" data-view="library"><span class="nav-ico">📚</span>文献中心</div>
+        <div class="nav-item" data-view="pubmed"><span class="nav-ico">🔬</span>PubMed 检索</div>
         <div class="nav-item" data-view="thesis"><span class="nav-ico">🎓</span>学位论文阅读</div>
         <div class="nav-item" data-view="topjournals"><span class="nav-ico">🏛️</span>顶刊追踪<span id="navTopJournalBadge" class="nav-badge hidden">0</span></div>
         <div class="nav-item" data-view="projects"><span class="nav-ico">📂</span>项目管理</div>
@@ -216,7 +217,7 @@
         <div class="toolbar">
           <button id="btnAddRecord" class="tb-btn accent">＋ 添加记录</button>
           <button id="btnUploadTop" class="tb-btn accent">⬆ 批量上传 PDF</button>
-          <button id="btnPubmed" class="tb-btn accent" title="检索 PubMed 并把文献导入当前文库">🔬 PubMed 检索</button>
+          <button id="btnPubmed" class="tb-btn accent" title="打开 PubMed 检索（也可从左侧边栏进入）">🔬 PubMed 检索</button>
           <div class="tb-sep"></div>
           <button id="btnFields" class="tb-btn">▦ 字段配置</button>
           <select id="statusFilter" class="tb-select">
@@ -260,7 +261,34 @@
         </div>
       </section>
 
-      <!-- ===== 视图：医学顶刊追踪 ===== -->
+      <!-- ===== 视图：PubMed 检索（医学版） ===== -->
+      <section id="viewPubmed" class="view hidden">
+        <p class="pm-intro">检索 NCBI PubMed（全球最大生物医学文献库），结果可一键导入文献中心；导入时会抓取英文原文摘要，并按 PMID 去重。</p>
+        <div class="pm-bar">
+          <input id="pmInput" class="tb-input" placeholder="检索式：疾病名 / 药物名 / MeSH 词，或 diabetes AND metformin 这类布尔表达式" />
+          <select id="pmSort" class="tb-select" style="width:118px">
+            <option value="relevance">按相关度</option>
+            <option value="pub_date">按发表日期</option>
+          </select>
+          <select id="pmYear" class="tb-select" style="width:112px"></select>
+          <select id="pmMax" class="tb-select" style="width:96px">
+            <option value="10">10 条</option><option value="20" selected>20 条</option><option value="50">50 条</option>
+          </select>
+          <select id="pmDocType" class="tb-select" style="width:132px">
+            <option value="empirical">临床实证文库</option>
+            <option value="model">机制模型文库</option>
+          </select>
+          <button class="btn btn-primary" id="btnPmSearch">检索</button>
+        </div>
+        <div class="pm-toolbar">
+          <label class="pm-check-all"><input type="checkbox" id="pmCheckAll" /> 全选当前结果</label>
+          <span id="pmCount" class="pm-count"></span>
+          <span class="ob-spacer"></span>
+          <button class="btn btn-primary" id="btnPmImportSelected">📥 导入选中（含摘要）</button>
+        </div>
+        <div id="pmResults" class="pm-results"></div>
+      </section>
+
       <!-- ===== 视图：学位论文阅读（表格 + 书签栏阅读器 + 检索增强问答） ===== -->
       <!-- 内部 DOM 由 thesis.js 的 buildDom() 生成，这里只留挂载点 -->
       <section id="viewThesis" class="view hidden"></section>
@@ -631,43 +659,6 @@
       <div class="modal-body">
         <p id="piDesc" class="pm-intro"></p>
         <div id="piGrid" class="pi-grid"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PubMed 检索弹窗（医学版） -->
-  <div id="pubmedModal" class="modal hidden">
-    <div class="modal-mask"></div>
-    <div class="modal-dialog modal-wide">
-      <div class="modal-head"><h3>🔬 PubMed 检索</h3><button class="modal-close" id="btnPmClose">✕</button></div>
-      <div class="modal-body">
-        <p class="pm-intro">检索 NCBI PubMed（全球最大生物医学文献库），结果可一键导入文献中心；导入时会抓取英文原文摘要，并按 PMID 去重。</p>
-        <div class="pm-bar">
-          <input id="pmInput" class="tb-input" placeholder="检索式：疾病名 / 药物名 / MeSH 词，或 diabetes AND metformin 这类布尔表达式" />
-          <select id="pmSort" class="tb-select" style="width:118px">
-            <option value="relevance">按相关度</option>
-            <option value="pub_date">按发表日期</option>
-          </select>
-          <select id="pmYear" class="tb-select" style="width:112px"></select>
-          <select id="pmMax" class="tb-select" style="width:96px">
-            <option value="10">10 条</option><option value="20" selected>20 条</option><option value="50">50 条</option>
-          </select>
-          <select id="pmDocType" class="tb-select" style="width:132px">
-            <option value="empirical">临床实证文库</option>
-            <option value="model">机制模型文库</option>
-          </select>
-          <button class="btn btn-primary" id="btnPmSearch">检索</button>
-        </div>
-        <div class="pm-toolbar">
-          <label class="pm-check-all"><input type="checkbox" id="pmCheckAll" /> 全选当前结果</label>
-          <span id="pmCount" class="pm-count"></span>
-          <span class="ob-spacer"></span>
-          <button class="btn btn-primary" id="btnPmImportSelected">📥 导入选中（含摘要）</button>
-        </div>
-        <div id="pmResults" class="pm-results"></div>
-      </div>
-      <div class="modal-foot">
-        <button id="btnPmClose2" class="btn">关闭</button>
       </div>
     </div>
   </div>

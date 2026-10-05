@@ -1,5 +1,6 @@
-// pubmed-panel.js —— PubMed 检索面板（医学版）
-// 依赖由 app.js 注入：{ api, toast, esc, onImported, currentDocType }
+// pubmed-panel.js —— PubMed 检索视图（医学版）
+// 侧边栏「🔬 PubMed 检索」是一个独立视图（#viewPubmed），不再是弹窗。
+// 依赖由 app.js 注入：{ api, toast, esc, onImported, getExistingPmids }
 // 面板内的搜索 / 摘要展开 / 导入均为局部逻辑，不触碰 app.js 内部状态。
 window.PubmedPanel = (function () {
   'use strict';
@@ -9,6 +10,7 @@ window.PubmedPanel = (function () {
   const abstracts = new Map(); // pmid -> 英文摘要（前端缓存，避免重复请求）
   let selected = new Set();
   let busy = false;
+  let inited = false;
 
   const $ = (id) => document.getElementById(id);
 
@@ -25,13 +27,10 @@ window.PubmedPanel = (function () {
 
   function init(injected) {
     deps = injected;
-    if (!deps || !$('pubmedModal')) return;
+    if (!deps || !$('viewPubmed') || inited) return;
+    inited = true;
     $('pmYear').innerHTML = yearOptions().map(([v, label]) => `<option value="${v}">${label}</option>`).join('');
 
-    const closeFn = () => close();
-    $('btnPmClose').addEventListener('click', closeFn);
-    $('btnPmClose2').addEventListener('click', closeFn);
-    $('pubmedModal').querySelector('.modal-mask').addEventListener('click', closeFn);
     $('pmInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
     $('btnPmSearch').addEventListener('click', search);
     $('pmCheckAll').addEventListener('change', (e) => {
@@ -41,21 +40,16 @@ window.PubmedPanel = (function () {
     });
     $('btnPmImportSelected').addEventListener('click', () => importSelected());
     $('pmResults').addEventListener('click', onListClick);
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !$('pubmedModal').classList.contains('hidden')) close();
-    });
   }
 
-  function open(docType) {
-    if (!$('pubmedModal')) return;
-    $('pubmedModal').classList.remove('hidden');
-    setTimeout(() => $('pmInput')?.focus(), 30);
+  // 切到本视图时调用：同步「已导入」标记，并聚焦检索框
+  function show(docType) {
+    if (!$('viewPubmed')) return;
+    const latest = deps?.getExistingPmids?.();
+    if (latest) setExistingPmids(latest);
+    renderList();
     if (docType) $('pmDocType').value = docType;
-  }
-
-  function close() {
-    $('pubmedModal')?.classList.add('hidden');
+    setTimeout(() => $('pmInput')?.focus(), 30);
   }
 
   async function search() {
@@ -200,5 +194,5 @@ window.PubmedPanel = (function () {
     if (btn) { btn.disabled = false; btn.textContent = original || '➕ 导入（含摘要）'; }
   }
 
-  return { init, open, setExistingPmids };
+  return { init, show, setExistingPmids };
 })();

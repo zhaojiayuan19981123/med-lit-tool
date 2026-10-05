@@ -6872,7 +6872,7 @@
   async function switchView(v) {
     view = v;
     document.querySelectorAll('.nav-item[data-view]').forEach((n) => n.classList.toggle('active', n.dataset.view === v));
-    const map = { home: 'viewHome', library: 'viewLibrary', thesis: 'viewThesis', topjournals: 'viewTopJournals', projects: 'viewProjects', tasks: 'viewTasks', papers: 'viewPapers', notes: 'viewNotes', markdown: 'viewMarkdown', ideas: 'viewIdeas', reviewer: 'viewReviewer', ai: 'viewAI', mail: 'viewMail' };
+    const map = { home: 'viewHome', library: 'viewLibrary', pubmed: 'viewPubmed', thesis: 'viewThesis', topjournals: 'viewTopJournals', projects: 'viewProjects', tasks: 'viewTasks', papers: 'viewPapers', notes: 'viewNotes', markdown: 'viewMarkdown', ideas: 'viewIdeas', reviewer: 'viewReviewer', ai: 'viewAI', mail: 'viewMail' };
     for (const [key, id] of Object.entries(map)) $(id).classList.toggle('hidden', key !== v);
     const isLib = v === 'library';
     // 文献中心：主区固定不滚动，表格容器内滚动（横向滚动条贴可视区底部）
@@ -6902,6 +6902,8 @@
     if (v === 'ideas') { if (!ideasLoaded) await loadIdeas(); else renderIdeas(); }
     if (v === 'reviewer') { if (!reviewsLoaded) await loadReviews(); else renderReviews(); }
     if (v === 'mail') await enterMailView();
+    // PubMed 检索：独立视图，进入时同步「已导入」标记并聚焦检索框
+    if (v === 'pubmed') window.PubmedPanel?.show(lib.type || 'empirical');
     // 学位论文阅读：面板 DOM 由 thesis.js 自建，这里只负责首次挂载
     if (v === 'thesis') await window.ThesisView?.mount();
     // 带 AI 能力的视图统一补上「模型切换」下拉（放在最后，保证容器已经显示）
@@ -9391,17 +9393,20 @@ a { color: #176b87; }
     if (ideaModeSel) {
       ideaModeSel.innerHTML = MED_IDEA_MODES.map((m) => `<option value="${m.value}">${esc(m.label)}</option>`).join('');
     }
-    // PubMed 检索面板（医学版）：注入依赖，并把当前文库作为默认导入目标
+    // PubMed 检索视图（医学版）：注入依赖，并把当前文库作为默认导入目标
     try {
       window.PubmedPanel?.init({
         api: (p, o) => api(p, o),
         toast,
         esc,
         onImported: async () => { await loadItems(); },
+        // 进入视图 / 导入后都要刷新「已导入」标记，来源是文献中心的当前数据
+        getExistingPmids: () => items.map((it) => it.pmid).filter(Boolean),
       });
       window.PubmedPanel?.setExistingPmids(items.map((it) => it.pmid).filter(Boolean));
     } catch (e) { console.warn('[pubmed] 面板初始化失败：', e); }
-    $('btnPubmed')?.addEventListener('click', () => window.PubmedPanel?.open(lib.type || 'empirical'));
+    // 文献中心工具栏的快捷入口：直接切到 PubMed 视图（与旧版一致）
+    $('btnPubmed')?.addEventListener('click', () => switchView('pubmed'));
     const noteTplSel = $('noteTemplateSelect');
     if (noteTplSel) {
       noteTplSel.innerHTML = MED_NOTE_TEMPLATES.map((t) => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
