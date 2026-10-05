@@ -3,6 +3,45 @@
 > **关于本文件的前三分之一**：下面从 `v1.0.0（医学版首版）` 开始的条目属于本项目（med-lit-tool）；
 > 其后的 `v1.9.0` ～ `v1.19.2` 条目是**上游基座「一站式科研终端（经管版）」**的变更记录，
 > 一并保留用于溯源（本项目的代码实现继承自该基座）。
+>
+> 本项目最新条目为 `v1.0.1`（PubMed 改为侧边栏独立视图）。
+
+## v1.0.1：PubMed 改为侧边栏独立视图（对齐旧版交互）（2026-10-06）
+
+v1.0.0 把 PubMed 做成了「文献中心工具栏按钮 → 弹窗」，与其它模块的交互不一致，也不方便边查边看。
+本次把入口提到左侧边栏，内容变成独立视图，回到早期医学版的用法。
+
+### 一、视图化改造（`public/index.html` / `public/app.js`）
+
+- `index.html`：左侧边栏「研究工作」分组新增 `<div class="nav-item" data-view="pubmed">🔬 PubMed 检索</div>`，
+  位置紧跟「文献中心」之后；原 `#pubmedModal` 弹窗标记整体改为
+  `<section id="viewPubmed" class="view hidden">`。**面板内部 id 全部保留**
+  （`pmInput` / `pmSort` / `pmYear` / `pmMax` / `pmDocType` / `btnPmSearch` / `pmCheckAll` /
+  `pmCount` / `btnPmImportSelected` / `pmResults`），所以检索与导入逻辑一行没改。
+- `app.js` 的 `switchView()`：视图映射表加上 `pubmed: 'viewPubmed'`；进入该视图时调用
+  `PubmedPanel.show(lib.type)`，把当前文库作为默认导入目标。
+- 文献中心工具栏的 `#btnPubmed` 保留为快捷入口，点击改为 `switchView('pubmed')`（与旧版一致）。
+- 顺手删掉一行错位的「视图：医学顶刊追踪」注释（早前批量改文案时留下的残留）。
+
+### 二、面板逻辑去弹窗化（`public/pubmed-panel.js`）
+
+- 删除弹窗的 `open()` / `close()`、遮罩点击关闭、`Esc` 关闭；`open()` 更名为 `show()`。
+- `init()` 改为幂等（新增 `inited` 标志，把握手限定一次），避免重复绑定事件。
+- 新增注入依赖 `getExistingPmids`：进入视图与每次导入后都从文献中心当前数据刷新
+  「已在文献中心」标记，从别处新增的文献也会被正确识别。
+
+### 三、样式（`public/style.css`）
+
+- `.pm-results` 去掉 `max-height: 52vh; overflow: auto`。原来是在弹窗里限高内滚，
+  放到整页视图后会变成「页面里再套一层滚动条」；现在由 `.main-area > .view` 统一滚动。
+- 补 `#viewPubmed` 的间距（检索行、工具行、结果列表）。
+
+### 四、验证
+
+- 单元测试 355 项全绿（PubMed 无既有断言，改动不影响套件）。
+- 真机浏览器冒烟由 35 项增至 **38 项**，新增 3 项：侧边栏存在 PubMed 入口且能切到独立视图、
+  确认不再是弹窗且不与其他视图同时显示、文献中心工具栏快捷入口可跳转；
+  并保留「导入后切回文献中心能看到带 PMID 的记录」这条端到端断言（真实 NCBI 检索 → 导入落库）。
 
 ## v1.0.0：医学版首版——PubMed 检索导入 / 论文图片提取 / 医学模板 / 医学顶刊（2026-10-05）
 
